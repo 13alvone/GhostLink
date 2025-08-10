@@ -1,87 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>GhostLink Web</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GhostLink Web</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>GhostLink Web Interface</h1>
-    <section>
-        <h2>Encode</h2>
-        <form id="encode-form" action="/encode" method="post" enctype="multipart/form-data">
-            <textarea id="text-input" name="text" placeholder="Text to encode"></textarea><br>
-            <input id="file-input" type="file" name="file"><br>
-            <div id="encode-error" style="color: red;"></div>
-            <button type="submit">Encode</button>
-        </form>
-    </section>
-    <section>
-        <h2>Decode</h2>
-        <form action="/decode" method="post" enctype="multipart/form-data">
-            <input type="file" name="wav"><br>
-            <button type="submit">Decode</button>
-        </form>
-    </section>
-</body>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+  <section class="section">
+    <div class="container">
+      <h1 class="title has-text-centered">GhostLink Web Interface</h1>
+      <div class="columns is-variable is-8">
+        <div class="column">
+          <h2 class="subtitle">Encode</h2>
+          <form id="encode-form" class="box" action="/encode" method="post" enctype="multipart/form-data">
+            <div class="field">
+              <label class="label" for="text-input">Text to encode</label>
+              <div class="control">
+                <textarea class="textarea" id="text-input" name="text" placeholder="Enter text"></textarea>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="file-input">File to encode</label>
+              <div class="control">
+                <input class="input" id="file-input" type="file" name="file">
+              </div>
+            </div>
+            <p id="encode-error" class="help is-danger"></p>
+            <div class="field">
+              <div class="control">
+                <button class="button is-link" type="submit">Encode</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="column">
+          <h2 class="subtitle">Decode</h2>
+          <form class="box" action="/decode" method="post" enctype="multipart/form-data">
+            <div class="field">
+              <label class="label" for="wav-input">WAV file</label>
+              <div class="control">
+                <input class="input" id="wav-input" type="file" name="wav">
+              </div>
+            </div>
+            <div class="field">
+              <div class="control">
+                <button class="button is-link" type="submit">Decode</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('encode-form');
     const textInput = document.getElementById('text-input');
     const fileInput = document.getElementById('file-input');
     const errorDiv = document.getElementById('encode-error');
 
     form.addEventListener('submit', async function (e) {
-        const text = textInput.value.trim();
-        const file = fileInput.files[0];
-        errorDiv.textContent = '';
+      const text = textInput.value.trim();
+      const file = fileInput.files[0];
+      errorDiv.textContent = '';
 
-        if (text && file) {
-            e.preventDefault();
-            errorDiv.textContent = 'Provide either text or file, not both.';
-            return;
-        }
-        if (!text && !file) {
-            e.preventDefault();
-            errorDiv.textContent = 'Provide text or file.';
-            return;
-        }
-
+      if (text && file) {
         e.preventDefault();
-        const formData = new FormData();
-        if (file) {
-            formData.append('file', file);
-        } else {
-            formData.append('text', text);
+        errorDiv.textContent = 'Provide either text or file, not both.';
+        return;
+      }
+      if (!text && !file) {
+        e.preventDefault();
+        errorDiv.textContent = 'Provide text or file.';
+        return;
+      }
+
+      e.preventDefault();
+      const formData = new FormData();
+      if (file) {
+        formData.append('file', file);
+      } else {
+        formData.append('text', text);
+      }
+
+      try {
+        const response = await fetch('/encode', { method: 'POST', body: formData });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({ detail: 'Server error' }));
+          errorDiv.textContent = data.detail || 'Server error';
+          return;
         }
 
-        try {
-            const response = await fetch('/encode', { method: 'POST', body: formData });
-            if (!response.ok) {
-                const data = await response.json().catch(() => ({ detail: 'Server error' }));
-                errorDiv.textContent = data.detail || 'Server error';
-                return;
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const disposition = response.headers.get('Content-Disposition');
-            let filename = 'output.wav';
-            if (disposition) {
-                const match = disposition.match(/filename="?([^";]+)"?/);
-                if (match) filename = match[1];
-            }
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-        } catch (err) {
-            errorDiv.textContent = 'Network error';
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const disposition = response.headers.get('Content-Disposition');
+        let filename = 'output.wav';
+        if (disposition) {
+          const match = disposition.match(/filename="?([^";]+)"?/);
+          if (match) filename = match[1];
         }
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        errorDiv.textContent = 'Network error';
+      }
     });
-});
-</script>
+  });
+  </script>
+</body>
 </html>

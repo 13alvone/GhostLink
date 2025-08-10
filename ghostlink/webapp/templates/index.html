@@ -27,6 +27,82 @@
                 <input class="input" id="file-input" type="file" name="file">
               </div>
             </div>
+            <div class="field">
+              <label class="label" for="samplerate-input">Sample rate</label>
+              <div class="control">
+                <input class="input" id="samplerate-input" type="number" name="samplerate" value="48000" title="Output WAV sample rate in Hz">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="baud-input">Baud</label>
+              <div class="control">
+                <input class="input" id="baud-input" type="number" step="0.1" name="baud" value="90.0" title="Symbols per second">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="amp-input">Amplitude</label>
+              <div class="control">
+                <input class="input" id="amp-input" type="number" step="0.01" name="amp" value="0.06" title="Peak amplitude 0-1">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="mode-select">FSK mode</label>
+              <div class="control">
+                <div class="select">
+                  <select id="mode-select" name="mode" title="Dense uses 8 tones; sparse uses 4">
+                    <option value="dense" selected>Dense (8-FSK)</option>
+                    <option value="sparse">Sparse (4-FSK)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="mix-select">Mix profile</label>
+              <div class="control">
+                <div class="select">
+                  <select id="mix-select" name="mix_profile" title="Carrier frequency set">
+                    <option value="streaming" selected>Streaming</option>
+                    <option value="studio">Studio</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="preamble-input">Preamble (s)</label>
+              <div class="control">
+                <input class="input" id="preamble-input" type="number" step="0.1" name="preamble_s" value="0.8" title="Seconds of preamble before data">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="gap-input">Gap (ms)</label>
+              <div class="control">
+                <input class="input" id="gap-input" type="number" step="0.1" name="gap_ms" value="0" title="Intersymbol gap in milliseconds">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="interleave-input">Interleave</label>
+              <div class="control">
+                <input class="input" id="interleave-input" type="number" name="interleave_depth" value="4" title="Interleaving depth for error correction">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="repeats-input">Repeats</label>
+              <div class="control">
+                <input class="input" id="repeats-input" type="number" name="repeats" value="2" title="Number of times to repeat payload">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="ramp-input">Ramp (ms)</label>
+              <div class="control">
+                <input class="input" id="ramp-input" type="number" step="0.1" name="ramp_ms" value="5.0" title="Raised-cosine ramp length per symbol">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="out-name-input">Output name</label>
+              <div class="control">
+                <input class="input" id="out-name-input" type="text" name="out_name" placeholder="Optional" title="Base filename for output">
+              </div>
+            </div>
             <p id="encode-error" class="help is-danger"></p>
             <div class="field">
               <div class="control">
@@ -42,6 +118,52 @@
               <label class="label" for="wav-input">WAV file</label>
               <div class="control">
                 <input class="input" id="wav-input" type="file" name="wav">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="d-baud-input">Baud</label>
+              <div class="control">
+                <input class="input" id="d-baud-input" type="number" step="0.1" name="baud" value="90.0" title="Symbols per second">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="d-mode-select">FSK mode</label>
+              <div class="control">
+                <div class="select">
+                  <select id="d-mode-select" name="mode" title="Dense uses 8 tones; sparse uses 4">
+                    <option value="dense" selected>Dense (8-FSK)</option>
+                    <option value="sparse">Sparse (4-FSK)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="d-mix-select">Mix profile</label>
+              <div class="control">
+                <div class="select">
+                  <select id="d-mix-select" name="mix_profile" title="Carrier frequency set">
+                    <option value="streaming" selected>Streaming</option>
+                    <option value="studio">Studio</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="d-preamble-input">Preamble (s)</label>
+              <div class="control">
+                <input class="input" id="d-preamble-input" type="number" step="0.1" name="preamble_s" value="0.8" title="Seconds of preamble before data">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="d-interleave-input">Interleave</label>
+              <div class="control">
+                <input class="input" id="d-interleave-input" type="number" name="interleave_depth" value="4" title="Interleaving depth for error correction">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="d-repeats-input">Repeats</label>
+              <div class="control">
+                <input class="input" id="d-repeats-input" type="number" name="repeats" value="2" title="Number of times payload was repeated">
               </div>
             </div>
             <div class="field">
@@ -78,11 +200,11 @@
       }
 
       e.preventDefault();
-      const formData = new FormData();
+      const formData = new FormData(form);
       if (file) {
-        formData.append('file', file);
+        formData.delete('text');
       } else {
-        formData.append('text', text);
+        formData.delete('file');
       }
 
       try {

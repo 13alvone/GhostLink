@@ -35,7 +35,21 @@ async def index(request: Request) -> HTMLResponse:
 
 
 @app.post("/encode")
-async def encode(text: Optional[str] = Form(None), file: UploadFile | None = File(None)) -> Response:
+async def encode(
+    text: Optional[str] = Form(None),
+    file: UploadFile | None = File(None),
+    samplerate: int = Form(48000),
+    baud: float = Form(90.0),
+    amp: float = Form(0.06),
+    mode: str = Form("dense"),
+    mix_profile: str = Form("streaming"),
+    gap_ms: float = Form(0.0),
+    preamble_s: float = Form(0.8),
+    interleave_depth: int = Form(4),
+    repeats: int = Form(2),
+    ramp_ms: float = Form(5.0),
+    out_name: Optional[str] = Form(None),
+) -> Response:
     if (text not in (None, "")) and file is not None:
         raise HTTPException(status_code=400, detail="Provide either text or file, not both")
     if (text in (None, "")) and file is None:
@@ -66,17 +80,17 @@ async def encode(text: Optional[str] = Form(None), file: UploadFile | None = Fil
             user_bytes=data,
             out_dir=tmpdir,
             base_name_hint=name_hint,
-            samplerate=48000,
-            baud=90.0,
-            amp=0.06,
-            dense=True,
-            mix_profile="streaming",
-            gap_ms=0.0,
-            preamble_s=0.8,
-            interleave_depth=4,
-            repeats=2,
-            ramp_ms=5.0,
-            out_name=None,
+            samplerate=samplerate,
+            baud=baud,
+            amp=amp,
+            dense=(mode != "sparse"),
+            mix_profile=mix_profile,
+            gap_ms=gap_ms,
+            preamble_s=preamble_s,
+            interleave_depth=interleave_depth,
+            repeats=repeats,
+            ramp_ms=ramp_ms,
+            out_name=(out_name or None),
         )
         with open(out_path, "rb") as fh:
             wav_bytes = fh.read()
@@ -86,7 +100,15 @@ async def encode(text: Optional[str] = Form(None), file: UploadFile | None = Fil
 
 
 @app.post("/decode")
-async def decode(wav: UploadFile = File(...)) -> PlainTextResponse:
+async def decode(
+    wav: UploadFile = File(...),
+    baud: float = Form(90.0),
+    mode: str = Form("dense"),
+    mix_profile: str = Form("streaming"),
+    preamble_s: float = Form(0.8),
+    interleave_depth: int = Form(4),
+    repeats: int = Form(2),
+) -> PlainTextResponse:
     with TemporaryDirectory() as tmpdir:
         wav_path = Path(tmpdir) / (wav.filename or "input.wav")
         total = 0
@@ -102,12 +124,12 @@ async def decode(wav: UploadFile = File(...)) -> PlainTextResponse:
         try:
             payload = decode_wav(
                 path=str(wav_path),
-                baud=90.0,
-                dense=True,
-                mix_profile="streaming",
-                preamble_s=0.8,
-                interleave_depth=4,
-                repeats=2,
+                baud=baud,
+                dense=(mode != "sparse"),
+                mix_profile=mix_profile,
+                preamble_s=preamble_s,
+                interleave_depth=interleave_depth,
+                repeats=repeats,
             )
         except Exception:
             raise HTTPException(

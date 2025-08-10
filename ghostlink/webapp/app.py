@@ -15,6 +15,13 @@ from ghostlink.decoder import decode_wav
 
 BASE_PATH = Path(__file__).resolve().parent
 
+
+# Maximum number of bytes allowed for uploads to the encode/decode endpoints.
+# This guards against excessive memory/disk usage from huge files.
+MAX_UPLOAD_BYTES = 1 * 1024 * 1024  # 1 MiB
+# Size of chunks to read when streaming uploads.
+READ_CHUNK_BYTES = 64 * 1024
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=str(BASE_PATH / "static")), name="static")
 
@@ -32,7 +39,17 @@ async def encode(text: Optional[str] = Form(None), file: UploadFile | None = Fil
         raise HTTPException(status_code=400, detail="Provide text or file")
 
     if file is not None:
-        data = await file.read()
+        total = 0
+        chunks: list[bytes] = []
+        while True:
+            chunk = await file.read(READ_CHUNK_BYTES)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > MAX_UPLOAD_BYTES:
+                raise HTTPException(status_code=413, detail="File too large")
+            chunks.append(chunk)
+        data = b"".join(chunks)
         name_hint = file.filename or "upload"
     else:
         data = text.encode("utf-8")
@@ -66,8 +83,16 @@ async def encode(text: Optional[str] = Form(None), file: UploadFile | None = Fil
 async def decode(wav: UploadFile = File(...)) -> PlainTextResponse:
     with TemporaryDirectory() as tmpdir:
         wav_path = Path(tmpdir) / (wav.filename or "input.wav")
+        total = 0
         with open(wav_path, "wb") as fh:
-            fh.write(await wav.read())
+            while True:
+                chunk = await wav.read(READ_CHUNK_BYTES)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > MAX_UPLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail="File too large")
+                fh.write(chunk)
         payload = decode_wav(
             path=str(wav_path),
             baud=90.0,

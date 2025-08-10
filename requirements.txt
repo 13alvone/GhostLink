@@ -1,8 +1,8 @@
 # Lightweight MIDI library for .mid output
-mido
-fastapi
-uvicorn
-jinja2
-python-multipart
-httpx
+mido==1.3.3
+fastapi==0.116.1
+uvicorn==0.35.0
+jinja2==3.1.6
+python-multipart==0.0.20
+httpx==0.28.1
 

@@ -3,7 +3,7 @@ from tempfile import TemporaryDirectory
 from fastapi.testclient import TestClient
 
 from ghostlink import encode_bytes_to_wav
-from ghostlink.webapp.app import app
+from ghostlink.webapp.app import app, MAX_UPLOAD_BYTES
 
 
 client = TestClient(app)
@@ -41,4 +41,18 @@ def test_decode_known_wav():
     resp = client.post("/decode", files=files)
     assert resp.status_code == 200
     assert resp.text.strip() == message.decode("utf-8")
+
+
+def test_encode_rejects_large_file():
+    data = b"x" * (MAX_UPLOAD_BYTES + 1)
+    files = {"file": ("big.txt", data, "text/plain")}
+    resp = client.post("/encode", files=files)
+    assert resp.status_code == 413
+
+
+def test_decode_rejects_large_file():
+    data = b"x" * (MAX_UPLOAD_BYTES + 1)
+    files = {"wav": ("big.wav", data, "audio/wav")}
+    resp = client.post("/decode", files=files)
+    assert resp.status_code == 413
 

@@ -93,15 +93,21 @@ async def decode(wav: UploadFile = File(...)) -> PlainTextResponse:
                 if total > MAX_UPLOAD_BYTES:
                     raise HTTPException(status_code=413, detail="File too large")
                 fh.write(chunk)
-        payload = decode_wav(
-            path=str(wav_path),
-            baud=90.0,
-            dense=True,
-            mix_profile="streaming",
-            preamble_s=0.8,
-            interleave_depth=4,
-            repeats=2,
-        )
+        try:
+            payload = decode_wav(
+                path=str(wav_path),
+                baud=90.0,
+                dense=True,
+                mix_profile="streaming",
+                preamble_s=0.8,
+                interleave_depth=4,
+                repeats=2,
+            )
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid or unsupported WAV file",
+            )
     try:
         text = payload.decode("utf-8")
     except Exception:

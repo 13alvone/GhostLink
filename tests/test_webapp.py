@@ -56,3 +56,18 @@ def test_decode_rejects_large_file():
     resp = client.post("/decode", files=files)
     assert resp.status_code == 413
 
+
+def test_decode_rejects_non_wav_data():
+    files = {"wav": ("bad.txt", b"not a wav", "text/plain")}
+    resp = client.post("/decode", files=files)
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Invalid or unsupported WAV file"
+
+
+def test_decode_rejects_malformed_wav():
+    malformed = b"RIFF\x24\x00\x00\x00WAVE"
+    files = {"wav": ("bad.wav", malformed, "audio/wav")}
+    resp = client.post("/decode", files=files)
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Invalid or unsupported WAV file"
+

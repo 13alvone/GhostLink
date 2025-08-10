@@ -38,7 +38,17 @@ It defaults to **dense 8-FSK** with forward error correction, interleaving, and 
 	cd GhostLink
 	python -m venv .venv
 	source .venv/bin/activate  # Windows: .venv\Scripts\activate
-	pip install .
+        pip install .
+
+Alternatively, run the bundled setup script to automate these steps and verify the CLI:
+
+        # macOS / Linux
+        python scripts/install.py
+
+        # Windows (PowerShell)
+        powershell scripts/install.ps1
+
+It creates the virtual environment, installs dependencies, and validates the CLI entry points.
 
 ---
 

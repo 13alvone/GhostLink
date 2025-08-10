@@ -63,6 +63,13 @@ def test_encode_rejects_large_file():
     assert resp.status_code == 413
 
 
+def test_encode_rejects_large_text():
+    text = "x" * (MAX_UPLOAD_BYTES + 1)
+    resp = client.post("/encode", data={"text": text})
+    assert resp.status_code == 413
+    assert resp.json()["detail"] == "Text too large"
+
+
 def test_decode_rejects_large_file():
     data = b"x" * (MAX_UPLOAD_BYTES + 1)
     files = {"wav": ("big.wav", data, "audio/wav")}

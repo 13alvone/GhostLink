@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -118,6 +119,28 @@ async def decode(wav: UploadFile = File(...)) -> PlainTextResponse:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="GhostLink web application")
+    parser.add_argument("--host", default="0.0.0.0", help="Host address to bind")
+    parser.add_argument("--port", type=int, default=8000, help="Port to listen on")
+    parser.add_argument(
+        "--version", action="store_true", help="Print version and exit"
+    )
+    args = parser.parse_args()
+
+    if args.version:
+        import importlib.metadata
+
+        try:
+            version = importlib.metadata.version("ghostlink")
+        except importlib.metadata.PackageNotFoundError:  # pragma: no cover - fallback
+            version = "unknown"
+        print(version)
+        return
+
     import uvicorn
 
-    uvicorn.run("ghostlink.webapp.app:app", host="0.0.0.0", port=8000)
+    uvicorn.run("ghostlink.webapp.app:app", host=args.host, port=args.port)
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    main()

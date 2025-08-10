@@ -48,7 +48,13 @@ def verify_executables(bindir: Path) -> None:
         exe_path = bindir / (exe + (".exe" if os.name == "nt" else ""))
         print(f"Verifying {exe}...")
         try:
-            subprocess.check_call([str(exe_path), "--help"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                [str(exe_path), "--help"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+                check=True,
+            )
         except Exception as exc:  # pragma: no cover - diagnostic output
             print(f"[x] Failed to run {exe}: {exc}", file=sys.stderr)
             raise SystemExit(1)

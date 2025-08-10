@@ -35,7 +35,9 @@ async def index(request: Request) -> HTMLResponse:
 
 @app.post("/encode")
 async def encode(text: Optional[str] = Form(None), file: UploadFile | None = File(None)) -> Response:
-    if text is None and file is None:
+    if (text not in (None, "")) and file is not None:
+        raise HTTPException(status_code=400, detail="Provide either text or file, not both")
+    if (text in (None, "")) and file is None:
         raise HTTPException(status_code=400, detail="Provide text or file")
 
     if file is not None:

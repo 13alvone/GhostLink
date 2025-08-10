@@ -1,7 +1,7 @@
 # GhostLink — Stealth Text-to-Audio Encoder (GibberLink Protocol, Dense 8-FSK)
 
 ## Overview
-GhostLink hides structured text inside audio using the **GibberLink** protocol — carefully band-placed FSK tones designed to survive consumer playback chains and lossy streaming codecs. It ships with two command-line tools: `ghostlink` for encoding and `ghostlink-decode` for recovering messages.
+GhostLink hides structured text inside audio using the **GibberLink** protocol — carefully band-placed FSK tones designed to survive consumer playback chains and lossy streaming codecs. It ships with three command-line tools: `ghostlink` for encoding, `ghostlink-decode` for recovering messages, and `ghostlink-web` for a browser-based interface.
 It defaults to **dense 8-FSK** with forward error correction, interleaving, and repeats for robustness; a 4-FSK mode is available for extra margin.
 
 ### Key Properties
@@ -15,15 +15,17 @@ It defaults to **dense 8-FSK** with forward error correction, interleaving, and 
 ## Project Layout
 
 - `ghostlink/` – core package providing the `ghostlink` and `ghostlink-decode` CLIs (`__main__.py`, `decoder.py`, `profiles.py`)
+- `ghostlink/webapp/` – FastAPI-powered web interface served by the `ghostlink-web` CLI
 - `tests/` – unit tests validating encoding/decoding
 - `pyproject.toml` – packaging and script entry points
 - `requirements.txt` – placeholder for future dependencies
 
-	GhostLink/
-	├── ghostlink/
-	├── tests/
-	├── pyproject.toml
-	└── requirements.txt
+        GhostLink/
+        ├── ghostlink/
+        │   └── webapp/
+        ├── tests/
+        ├── pyproject.toml
+        └── requirements.txt
 
 ---
 
@@ -84,6 +86,15 @@ It creates the virtual environment, installs dependencies, and validates the CLI
 
         # 7) Decode a GhostLink (GibberLink protocol) WAV back to text
         ghostlink-decode out/msg_ce67eacbbb93.wav -v
+
+### Web Interface
+        # Launch the FastAPI web UI
+        ghostlink-web
+
+        # or equivalently
+        python -m ghostlink.webapp.app
+
+Once running, open http://localhost:8000 in your browser to access the encoder/decoder forms.
 
 ---
 

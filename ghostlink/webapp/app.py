@@ -55,7 +55,10 @@ async def encode(text: Optional[str] = Form(None), file: UploadFile | None = Fil
         data = b"".join(chunks)
         name_hint = file.filename or "upload"
     else:
-        data = text.encode("utf-8")
+        encoded = text.encode("utf-8")
+        if len(encoded) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Text too large")
+        data = encoded
         name_hint = "message"
 
     with TemporaryDirectory() as tmpdir:

@@ -175,8 +175,13 @@
             </div>
             <div class="field">
               <label class="label" for="decode-output">Decoded text</label>
-              <div class="control">
-                <textarea class="textarea" id="decode-output" readonly placeholder="Decoded text will appear here"></textarea>
+              <div class="field has-addons">
+                <div class="control is-expanded">
+                  <textarea class="textarea" id="decode-output" readonly placeholder="Decoded text will appear here"></textarea>
+                </div>
+                <div class="control">
+                  <button class="button is-light" id="copy-btn" type="button">Copy</button>
+                </div>
               </div>
             </div>
           </form>
@@ -260,11 +265,18 @@
     const decodeForm = document.getElementById('decode-form');
     const decodeError = document.getElementById('decode-error');
     const decodeOutput = document.getElementById('decode-output');
+    const wavInput = document.getElementById('wav-input');
+    const copyBtn = document.getElementById('copy-btn');
 
     decodeForm.addEventListener('submit', async function (e) {
       e.preventDefault();
       decodeError.textContent = '';
       decodeOutput.value = '';
+      const file = wavInput.files[0];
+      if (!file) {
+        decodeError.textContent = 'Provide a WAV file.';
+        return;
+      }
       const formData = new FormData(decodeForm);
 
       showOverlay();
@@ -283,6 +295,14 @@
       } finally {
         hideOverlay();
         setDisabled(decodeForm, false);
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(decodeOutput.value);
+      } catch {
+        decodeError.textContent = 'Copy failed';
       }
     });
   });

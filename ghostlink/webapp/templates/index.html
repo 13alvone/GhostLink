@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+  <div id="loading-overlay"><div class="spinner"></div></div>
   <section class="section">
     <div class="container">
       <h1 class="title has-text-centered">GhostLink Web Interface</h1>
@@ -113,7 +114,7 @@
         </div>
         <div class="column">
           <h2 class="subtitle">Decode</h2>
-          <form class="box" action="/decode" method="post" enctype="multipart/form-data">
+          <form id="decode-form" class="box" action="/decode" method="post" enctype="multipart/form-data">
             <div class="field">
               <label class="label" for="wav-input">WAV file</label>
               <div class="control">
@@ -166,9 +167,16 @@
                 <input class="input" id="d-repeats-input" type="number" name="repeats" value="2" title="Number of times payload was repeated">
               </div>
             </div>
+            <p id="decode-error" class="help is-danger"></p>
             <div class="field">
               <div class="control">
                 <button class="button is-link" type="submit">Decode</button>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="decode-output">Decoded text</label>
+              <div class="control">
+                <textarea class="textarea" id="decode-output" readonly placeholder="Decoded text will appear here"></textarea>
               </div>
             </div>
           </form>
@@ -178,40 +186,51 @@
   </section>
   <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('encode-form');
+    const overlay = document.getElementById('loading-overlay');
+    function showOverlay() { overlay.style.display = 'flex'; }
+    function hideOverlay() { overlay.style.display = 'none'; }
+    function setDisabled(form, disabled) {
+      form.querySelectorAll('input, textarea, button, select').forEach(el => {
+        el.disabled = disabled;
+      });
+    }
+
+    const encodeForm = document.getElementById('encode-form');
     const textInput = document.getElementById('text-input');
     const fileInput = document.getElementById('file-input');
-    const errorDiv = document.getElementById('encode-error');
+    const encodeError = document.getElementById('encode-error');
 
-    form.addEventListener('submit', async function (e) {
+    encodeForm.addEventListener('submit', async function (e) {
       const text = textInput.value.trim();
       const file = fileInput.files[0];
-      errorDiv.textContent = '';
+      encodeError.textContent = '';
 
       if (text && file) {
         e.preventDefault();
-        errorDiv.textContent = 'Provide either text or file, not both.';
+        encodeError.textContent = 'Provide either text or file, not both.';
         return;
       }
       if (!text && !file) {
         e.preventDefault();
-        errorDiv.textContent = 'Provide text or file.';
+        encodeError.textContent = 'Provide text or file.';
         return;
       }
 
       e.preventDefault();
-      const formData = new FormData(form);
+      const formData = new FormData(encodeForm);
       if (file) {
         formData.delete('text');
       } else {
         formData.delete('file');
       }
 
+      showOverlay();
+      setDisabled(encodeForm, true);
       try {
         const response = await fetch('/encode', { method: 'POST', body: formData });
         if (!response.ok) {
           const data = await response.json().catch(() => ({ detail: 'Server error' }));
-          errorDiv.textContent = data.detail || 'Server error';
+          encodeError.textContent = data.detail || 'Server error';
           return;
         }
 
@@ -231,7 +250,39 @@
         a.remove();
         window.URL.revokeObjectURL(url);
       } catch (err) {
-        errorDiv.textContent = 'Network error';
+        encodeError.textContent = 'Network error';
+      } finally {
+        hideOverlay();
+        setDisabled(encodeForm, false);
+      }
+    });
+
+    const decodeForm = document.getElementById('decode-form');
+    const decodeError = document.getElementById('decode-error');
+    const decodeOutput = document.getElementById('decode-output');
+
+    decodeForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      decodeError.textContent = '';
+      decodeOutput.value = '';
+      const formData = new FormData(decodeForm);
+
+      showOverlay();
+      setDisabled(decodeForm, true);
+      try {
+        const response = await fetch('/decode', { method: 'POST', body: formData });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({ detail: 'Server error' }));
+          decodeError.textContent = data.detail || 'Server error';
+          return;
+        }
+        const text = await response.text();
+        decodeOutput.value = text;
+      } catch (err) {
+        decodeError.textContent = 'Network error';
+      } finally {
+        hideOverlay();
+        setDisabled(decodeForm, false);
       }
     });
   });

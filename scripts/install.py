@@ -44,6 +44,7 @@ def install_project(pip: Path, root: Path) -> None:
 
 def verify_executables(bindir: Path) -> None:
     executables = ["ghostlink", "ghostlink-decode", "ghostlink-web"]
+    timeout = 5
     for exe in executables:
         exe_path = bindir / (exe + (".exe" if os.name == "nt" else ""))
         print(f"Verifying {exe}...")
@@ -52,9 +53,12 @@ def verify_executables(bindir: Path) -> None:
                 [str(exe_path), "--help"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                timeout=5,
+                timeout=timeout,
                 check=True,
             )
+        except subprocess.TimeoutExpired:
+            print(f"[x] {exe} timed out after {timeout}s", file=sys.stderr)
+            raise SystemExit(1)
         except Exception as exc:  # pragma: no cover - diagnostic output
             print(f"[x] Failed to run {exe}: {exc}", file=sys.stderr)
             raise SystemExit(1)

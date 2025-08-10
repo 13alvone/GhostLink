@@ -16,6 +16,12 @@ def test_encode_returns_wav():
     assert resp.content[:4] == b"RIFF"
 
 
+def test_encode_requires_text_or_file():
+    resp = client.post("/encode")
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "Provide text or file"
+
+
 def test_encode_rejects_both_fields():
     files = {"file": ("msg.txt", b"data", "text/plain")}
     resp = client.post("/encode", data={"text": "secret"}, files=files)

@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Optional
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Request
+from fastapi.responses import HTMLResponse, PlainTextResponse, Response
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from ghostlink.__main__ import encode_bytes_to_wav
+from ghostlink.decoder import decode_wav
+
+BASE_PATH = Path(__file__).resolve().parent
+
+app = FastAPI()
+app.mount("/static", StaticFiles(directory=str(BASE_PATH / "static")), name="static")
+
+templates = Jinja2Templates(directory=str(BASE_PATH / "templates"))
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(request, "index.html", {})
+
+
+@app.post("/encode")
+async def encode(text: Optional[str] = Form(None), file: UploadFile | None = File(None)) -> Response:
+    if text is None and file is None:
+        raise HTTPException(status_code=400, detail="Provide text or file")
+
+    if file is not None:
+        data = await file.read()
+        name_hint = file.filename or "upload"
+    else:
+        data = text.encode("utf-8")
+        name_hint = "message"
+
+    with TemporaryDirectory() as tmpdir:
+        out_path, _ = encode_bytes_to_wav(
+            user_bytes=data,
+            out_dir=tmpdir,
+            base_name_hint=name_hint,
+            samplerate=48000,
+            baud=90.0,
+            amp=0.06,
+            dense=True,
+            mix_profile="streaming",
+            gap_ms=0.0,
+            preamble_s=0.8,
+            interleave_depth=4,
+            repeats=2,
+            ramp_ms=5.0,
+            out_name=None,
+        )
+        with open(out_path, "rb") as fh:
+            wav_bytes = fh.read()
+    filename = os.path.basename(out_path)
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return Response(content=wav_bytes, media_type="audio/wav", headers=headers)
+
+
+@app.post("/decode")
+async def decode(wav: UploadFile = File(...)) -> PlainTextResponse:
+    with TemporaryDirectory() as tmpdir:
+        wav_path = Path(tmpdir) / (wav.filename or "input.wav")
+        with open(wav_path, "wb") as fh:
+            fh.write(await wav.read())
+        payload = decode_wav(
+            path=str(wav_path),
+            baud=90.0,
+            dense=True,
+            mix_profile="streaming",
+            preamble_s=0.8,
+            interleave_depth=4,
+            repeats=2,
+        )
+    try:
+        text = payload.decode("utf-8")
+    except Exception:
+        text = payload.decode("latin-1", errors="ignore")
+    return PlainTextResponse(text)
+
+
+def main() -> None:
+    import uvicorn
+
+    uvicorn.run("ghostlink.webapp.app:app", host="0.0.0.0", port=8000)

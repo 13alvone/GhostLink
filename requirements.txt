@@ -1,3 +1,7 @@
 # Lightweight MIDI library for .mid output
 mido
+fastapi
+uvicorn
+jinja2
+python-multipart
 

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>GhostLink Web</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>GhostLink Web Interface</h1>
+    <section>
+        <h2>Encode</h2>
+        <form action="/encode" method="post" enctype="multipart/form-data">
+            <textarea name="text" placeholder="Text to encode"></textarea><br>
+            <input type="file" name="file"><br>
+            <button type="submit">Encode</button>
+        </form>
+    </section>
+    <section>
+        <h2>Decode</h2>
+        <form action="/decode" method="post" enctype="multipart/form-data">
+            <input type="file" name="wav"><br>
+            <button type="submit">Decode</button>
+        </form>
+    </section>
+</body>
+</html>

@@ -9,9 +9,10 @@
     <h1>GhostLink Web Interface</h1>
     <section>
         <h2>Encode</h2>
-        <form action="/encode" method="post" enctype="multipart/form-data">
-            <textarea name="text" placeholder="Text to encode"></textarea><br>
-            <input type="file" name="file"><br>
+        <form id="encode-form" action="/encode" method="post" enctype="multipart/form-data">
+            <textarea id="text-input" name="text" placeholder="Text to encode"></textarea><br>
+            <input id="file-input" type="file" name="file"><br>
+            <div id="encode-error" style="color: red;"></div>
             <button type="submit">Encode</button>
         </form>
     </section>
@@ -23,4 +24,64 @@
         </form>
     </section>
 </body>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('encode-form');
+    const textInput = document.getElementById('text-input');
+    const fileInput = document.getElementById('file-input');
+    const errorDiv = document.getElementById('encode-error');
+
+    form.addEventListener('submit', async function (e) {
+        const text = textInput.value.trim();
+        const file = fileInput.files[0];
+        errorDiv.textContent = '';
+
+        if (text && file) {
+            e.preventDefault();
+            errorDiv.textContent = 'Provide either text or file, not both.';
+            return;
+        }
+        if (!text && !file) {
+            e.preventDefault();
+            errorDiv.textContent = 'Provide text or file.';
+            return;
+        }
+
+        e.preventDefault();
+        const formData = new FormData();
+        if (file) {
+            formData.append('file', file);
+        } else {
+            formData.append('text', text);
+        }
+
+        try {
+            const response = await fetch('/encode', { method: 'POST', body: formData });
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({ detail: 'Server error' }));
+                errorDiv.textContent = data.detail || 'Server error';
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const disposition = response.headers.get('Content-Disposition');
+            let filename = 'output.wav';
+            if (disposition) {
+                const match = disposition.match(/filename="?([^";]+)"?/);
+                if (match) filename = match[1];
+            }
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            errorDiv.textContent = 'Network error';
+        }
+    });
+});
+</script>
 </html>
